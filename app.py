@@ -2,18 +2,30 @@
 import streamlit as st
 import tensorflow as tf
 import numpy as np
+import gdown
+import os
 from PIL import Image
 
 st.set_page_config(page_title="Skin Cancer Detection")
 
+MODEL_PATH = "skin_cancer_cnn.keras"
+FILE_ID = "1yJuXTFukSvHc12By-MSx8l5b8ZPta2g0"
+
 @st.cache_resource
 def load_model():
-    return tf.keras.models.load_model("skin_cancer_cnn.keras")
+    if not os.path.exists(MODEL_PATH):
+        gdown.download(
+            id=FILE_ID,
+            output=MODEL_PATH,
+            quiet=False
+        )
+
+    return tf.keras.models.load_model(MODEL_PATH)
 
 model = load_model()
 
 st.title("Skin Cancer Detection")
-st.write("Upload a skin image to get a model prediction.")
+st.write("Upload a skin image to get a prediction.")
 
 uploaded_file = st.file_uploader(
     "Choose an image",
@@ -32,9 +44,14 @@ if uploaded_file is not None:
 
     if prediction > 0.5:
         st.error("Prediction: Malignant")
-        st.write("Confidence:", round(float(prediction) * 100, 2), "%")
+        confidence = float(prediction) * 100
     else:
         st.success("Prediction: Benign")
-        st.write("Confidence:", round((1 - float(prediction)) * 100, 2), "%")
+        confidence = (1 - float(prediction)) * 100
 
-st.warning("Educational project only. This tool is not for medical diagnosis.")
+    st.write("Model confidence:", round(confidence, 2), "%")
+
+st.warning(
+    "Educational project only. "
+    "This model is not suitable for medical diagnosis."
+)
